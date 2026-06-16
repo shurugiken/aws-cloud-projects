@@ -1,0 +1,38 @@
+{
+  "AlarmName": "s3-bucket-4xx-error-rate",
+  "AlarmDescription": "Fires when the S3 bucket receives an elevated number of 4xx errors. This typically indicates access permission issues, broken references, or a misconfigured IAM policy. Investigate promptly.",
+
+  "Namespace": "AWS/S3",
+  "MetricName": "4xxErrors",
+
+  "Dimensions": [
+    {
+      "Name": "BucketName",
+      "Value": "REPLACE_WITH_BUCKET_NAME"
+    },
+    {
+      "Name": "FilterId",
+      "Value": "EntireBucket"
+    }
+  ],
+
+  "Statistic": "Sum",
+
+  "Period": 300,
+  "EvaluationPeriods": 2,
+  "DatapointsToAlarm": 2,
+
+  "Threshold": 10,
+  "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+  "TreatMissingData": "notBreaching",
+
+  "AlarmActions": [
+    "arn:aws:sns:us-east-1:123456789012:ops-alerts"
+  ],
+  "OKActions": [
+    "arn:aws:sns:us-east-1:123456789012:ops-alerts"
+  ],
+  "InsufficientDataActions": [],
+
+  "ActionsEnabled": true
+}

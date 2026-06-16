@@ -1,0 +1,19 @@
+# Environment and secrets — never commit these
+.env
+.env.*
+*.pem
+*.key
+*.p12
+credentials
+
+# AWS CLI credential files
+.aws/credentials
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
