@@ -1,6 +1,6 @@
 # AWS Cloud Projects
 
-Two hands-on labs demonstrating core AWS skills: hosting a production-grade static website and implementing least-privilege IAM with operational monitoring.
+Two hands-on labs demonstrating core AWS skills: hosting a secure static website and implementing least-privilege IAM with operational monitoring.
 
 ## Why These Projects
 
