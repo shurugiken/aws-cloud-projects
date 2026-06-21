@@ -2,6 +2,50 @@
 
 Two hands-on labs demonstrating core AWS skills: hosting a secure static website and implementing least-privilege IAM with operational monitoring.
 
+## Architecture
+
+The diagrams below render natively on GitHub and reflect the actual resources defined in this repo's CloudFormation template, policy documents, and deploy scripts.
+
+### Lab 1 — Static Site: S3 (private) + CloudFront over HTTPS via OAC
+
+The S3 bucket is never public. The viewer reaches CloudFront over HTTPS (TLS enforced by the ACM cert), and CloudFront is the *only* principal allowed to read the bucket — authenticated with a SigV4-signed request through Origin Access Control.
+
+```mermaid
+flowchart TD
+    User["Browser"]
+    R53["Route 53<br/>DnsRecordApex (Alias A/AAAA)<br/>example.com -> CloudFront"]
+    CF["CloudFrontDistribution<br/>Origin id: S3Origin<br/>ViewerProtocolPolicy: redirect-to-https<br/>CachePolicy: CachingOptimized<br/>ACM cert (us-east-1)"]
+    OAC["CloudFrontOAC<br/>SigningProtocol: sigv4<br/>SigningBehavior: always"]
+    S3["StaticSiteBucket (PRIVATE)<br/>Block all public access: ON<br/>Versioning + AES256 SSE"]
+    Policy["StaticSiteBucketPolicy<br/>Allow cloudfront.amazonaws.com<br/>s3:GetObject<br/>Condition: AWS:SourceArn = this distribution"]
+
+    User -->|"HTTPS :443"| R53
+    R53 --> CF
+    CF -->|"SigV4-signed origin request"| OAC
+    OAC --> S3
+    Policy -.->|"authorizes OAC-only reads"| S3
+```
+
+### Lab 2 — IAM least-privilege role + CloudWatch alarm to SNS
+
+A managed policy (`s3-readonly-<bucket>`) scoped to one bucket is attached to an existing role. Access control and observability are paired: a CloudWatch alarm watches the bucket's 4xx error rate and notifies an SNS topic when access starts failing.
+
+```mermaid
+flowchart TD
+    Role["IAM Role (ROLE_NAME)<br/>e.g. app-readonly-role"]
+    Pol["Managed policy: s3-readonly-(bucket)<br/>Allow: AllowListTargetBucket (s3:ListBucket, s3:GetBucketLocation)<br/>Allow: AllowGetObjectsFromTargetBucket (s3:GetObject*)<br/>Deny: ExplicitDenyDestructiveActions (Delete/Put)"]
+    Bucket["Target S3 bucket<br/>arn:aws:s3:::(bucket) (+ /*)"]
+    CW["CloudWatch alarm: s3-bucket-4xx-error-rate<br/>Namespace AWS/S3, Metric 4xxErrors<br/>Threshold ≥ 10 over 2 x 300s"]
+    SNS["SNS topic: ops-alerts<br/>AlarmActions + OKActions"]
+    Email["Email subscriber"]
+
+    Role -->|"attach-role-policy"| Pol
+    Pol -->|"resource-scoped, read-only"| Bucket
+    Bucket -->|"4xxErrors metric"| CW
+    CW -->|"ALARM / OK"| SNS
+    SNS --> Email
+```
+
 ## Why These Projects
 
 Hiring managers want to see that you understand *why* AWS services are wired together the way they are, not just that you can click through the console. These labs were built to practice cloud fundamentals that show up in every IT/sysadmin/cloud role:
